@@ -37,7 +37,6 @@ def login_navbar(request):
             token = user['idToken']
             user_info = authe.get_account_info(token)
             user_id = user_info['users'][0]['localId']
-            # Save the user ID in session to indicate a logged-in state
             request.session['user_id'] = user_id
             request.session['user_email'] = email
             messages.success(request, 'Logged in successfully.')
@@ -86,7 +85,7 @@ def login(request):
         password = request.POST.get('login_password')
         try:
             user = authe.sign_in_with_email_and_password(email, password)
-            #token = user['idToken']
+            token = user['idToken']
             messages.success(request, 'Account logged in.')
 
             return redirect('mainpage')
@@ -94,13 +93,7 @@ def login(request):
             return redirect('login')
     return render(request, 'login.html', {'user_email': user_email})
 
-def verify_token(request):
-    token = request.POST.get('token')
-    try:
-        decoded_token = auth.verify_id_token(token)
-        return JsonResponse({'message': 'Token verified successfully.', 'uid': decoded_token['uid']})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+
     
 
 def create(request):
