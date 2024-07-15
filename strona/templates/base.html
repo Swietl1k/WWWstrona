@@ -26,7 +26,7 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0" id="menu-buttons">
                         
-                        {% if user_email %}
+                        {% if user_name %}
                         <li class="nav-item active">
                             <a class="nav-link" href="/strona/create">Create</a>
                         </li>
@@ -39,9 +39,9 @@
                                 <a class="nav-link" href="/strona/register">Register account</a>
                             </li>
                     </ul>
-                    {% if user_email %}
+                    {% if user_name %}
                     <div class="row d-flex">
-                        Witaj {{ user_email }} ! 
+                        Witaj {{ user_name }} ! 
                     </div>
                     <div>
                         <form action="{% url 'logout' %}" method="POST" style="display:inline;">
