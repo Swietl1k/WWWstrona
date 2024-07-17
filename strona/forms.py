@@ -1,7 +1,8 @@
 from django import forms
 
 class GameForm(forms.Form):
-    title = forms.CharField(max_length=100, label="Title")
+    title = forms.CharField(max_length=50, label="Title")
+    description = forms.CharField(max_length=150, label="Description")
     number_of_choices = forms.ChoiceField(
         choices=[
             (8, '8 Choices'),

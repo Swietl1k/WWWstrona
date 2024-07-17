@@ -140,6 +140,7 @@ def create(request):
         form = GameForm(request.POST)
         if form.is_valid():
             title = form.cleaned_data['title']
+            description = form.cleaned_data['description']
             number_of_choices = form.cleaned_data['number_of_choices']
             category = form.cleaned_data['category']
  
@@ -150,6 +151,7 @@ def create(request):
                 "title": title,
                 "number_of_choices": number_of_choices,
                 "category": category,
+                "description": description,
             }
  
             try:
