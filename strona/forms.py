@@ -10,6 +10,20 @@ class GameForm(forms.Form):
         ],
         label="Number of choices"
     )
+    category = forms.ChoiceField(
+        choices=[
+            ('Sports', 'Sports'),
+            ('Movies', 'Movies'),
+            ('Music', 'Music'),
+            ('Gaming', 'Gaming'),
+            ('Food', 'Food'),
+            ('Idols', 'Idols'),
+            ('Animals', 'Animals'),
+            ('Other', 'Other'),
+        ],
+        label="Category"
+        
+    )
 
 
 class UploadFileForm(forms.Form):

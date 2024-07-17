@@ -141,13 +141,15 @@ def create(request):
         if form.is_valid():
             title = form.cleaned_data['title']
             number_of_choices = form.cleaned_data['number_of_choices']
+            category = form.cleaned_data['category']
  
             game_id = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
  
  
             game_data = {
                 "title": title,
-                "number_of_choices": number_of_choices
+                "number_of_choices": number_of_choices,
+                "category": category,
             }
  
             try:
