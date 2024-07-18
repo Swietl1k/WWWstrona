@@ -9,4 +9,6 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('create/', views.create, name='create'),
     path('add_pics/<str:game_id>/', views.add_pics, name='add_pics'),
+    path('find_category/<str:category>', views.find_category, name='find_category'),
+    path('play/<str:game_id>', views.play, name='play'),
 ]

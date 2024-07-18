@@ -23,10 +23,24 @@ class GameForm(forms.Form):
             ('Other', 'Other'),
         ],
         label="Category"
-        
     )
 
 
 class UploadFileForm(forms.Form):
     title = forms.CharField(max_length=50)
     file = forms.FileField()
+
+class CategoryForm(forms.Form):
+    category = forms.ChoiceField(
+        choices=[
+            ('Sports', 'Sports'),
+            ('Movies', 'Movies'),
+            ('Music', 'Music'),
+            ('Gaming', 'Gaming'),
+            ('Food', 'Food'),
+            ('Idols', 'Idols'),
+            ('Animals', 'Animals'),
+            ('Other', 'Other'),
+        ],
+        label="Category"        
+    )

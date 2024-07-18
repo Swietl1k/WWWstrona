@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.contrib import messages
 from firebase_admin import auth
 import pyrebase
-from .forms import GameForm, UploadFileForm
+from .forms import *
 import random, string
  
 from datetime import datetime
@@ -26,7 +26,7 @@ config={
  
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
-database = firebase.database()
+db = firebase.database()
  
  
 def login_navbar(request):
@@ -36,7 +36,7 @@ def login_navbar(request):
         try:
             user = auth.sign_in_with_email_and_password(email, password)
             user_id = user['localId']
-            username = str(database.child("users").child(user_id).child("username").get())
+            username = str(db.child("users").child(user_id).child("username").get())
             request.session['user_id'] = user_id
             request.session['user_email'] = email
             request.session['user_name'] = username
@@ -62,11 +62,24 @@ def logout(request):
     return redirect('mainpage')
  
  
- 
 def mainpage(request):
     username = request.session.get('user_name')
+
+    if request.method == 'POST':
+        print("POST data:", request.POST)
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            print("Form is valid")
+            category = form.cleaned_data['category']
+            return redirect('find_category', category=category)
+        else:
+            print("Form errors:", form.errors)
+            print("Form non-field errors:", form.non_field_errors())
+    
+    else:
+        form = CategoryForm()
  
-    return render(request, 'mainPage.html', {'user_name': username})
+    return render(request, 'mainPage.html', {'user_name': username, "form": form})
  
  
 def register(request):
@@ -98,7 +111,7 @@ def register(request):
             request.session['user_id'] = user_id
             request.session['user_email'] = email
             request.session['user_name'] = username
-            database.child("users").child(user_id).child("username").set(username)
+            db.child("users").child(user_id).child("username").set(username)
             messages.success(request, 'Account registered successfully.')
  
             return redirect('mainpage')
@@ -117,7 +130,7 @@ def login(request):
         try:
             user = auth.sign_in_with_email_and_password(email, password)
             user_id = user['localId']
-            username = database.child("users").child(user_id).child("username").get().val()
+            username = db.child("users").child(user_id).child("username").get().val()
             request.session['user_id'] = user_id
             request.session['user_name'] = username
             request.session['user_email'] = email
@@ -157,9 +170,9 @@ def create(request):
             try:
                 poland_time = datetime.now(ZoneInfo('Europe/Warsaw'))
                 formatted_time = poland_time.strftime('%Y-%m-%d %H:%M:%S %Z%z')
-                database.child("games").child(game_id).set(game_data)
-                database.child("games").child(game_id).child("date").set(formatted_time)
-                database.child("games").child(game_id).child("user_id").set(user_id)
+                db.child("games").child(game_id).set(game_data)
+                db.child("games").child(game_id).child("date").set(formatted_time)
+                db.child("games").child(game_id).child("user_id").set(user_id)
                 messages.success(request, "Game created successfully!")
                 return redirect('add_pics', game_id=game_id)
             except Exception as e:
@@ -173,7 +186,7 @@ def create(request):
  
 def add_pics(request, game_id):
     username = request.session.get('user_name')
-    game = database.child("games").child(game_id).get().val()
+    game = db.child("games").child(game_id).get().val()
     if not game:
         messages.error(request, "Invalid game ID.")
         return redirect('mainpage')
@@ -218,3 +231,23 @@ def add_pics(request, game_id):
         form = UploadFileForm()
  
     return render(request, 'add_pics.html', {"form": form, 'game_id': game_id, 'upload_count': current_upload_count, 'user_name': username})
+
+
+def find_category(request, category):
+    games = []
+    all_games = db.child("games").get().val()
+
+    if all_games:
+        for game_id, game_data in all_games.items():
+            if game_data.get("category") == category:
+                game_data['game_id'] = game_id
+                games.append(game_data)
+    else:
+        messages.error(request, "Error accessing database")
+
+    return render(request, 'category.html', {"category": category, "games": games})
+
+
+def play(request, game_id):
+    title = db.child("games").child(game_id).child("title").get().val()
+    return render(request, 'play.html', {'title': title})
