@@ -15,7 +15,7 @@
   <ul>
     {% for game in games %}
       <li>
-        <a href='/strona/play/{{game.game_id}}'><strong>Game ID:</strong> {{ game.game_id }}</a><br>
+        <a href='/strona/show_game/{{game.game_id}}'><strong>Game ID:</strong> {{ game.game_id }}</a><br>
         <strong>Title:</strong> {{ game.title }}<br>
         <strong>Description:</strong> {{ game.description }}<br>
         <strong>Number of Choices:</strong> {{ game.number_of_choices }}<br>

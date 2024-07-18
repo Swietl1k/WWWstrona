@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-info">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<h1> Play {{game_data.title}}</h1>
+
+
+<a href="/strona/play/{{ game_id }}" class="btn btn-primary">Play</a>
+
+{% endblock %}

@@ -204,14 +204,10 @@ def add_pics(request, game_id):
  
             try:
                 storage = firebase.storage()
-                img_name = str(current_upload_count) + "_" + title
-                file_path = f"images/{game_id}/{img_name}.png"
+                file_path = f"images/{game_id}/{current_upload_count}.png"
                 storage.child(file_path).put(file)
  
-                image_data = {
-                    "name": title,
-                    "file_path": file_path
-                }
+                db.child("games").child(game_id).child("img_titles").child(current_upload_count).set(title)
  
  
                 current_upload_count += 1
@@ -248,6 +244,40 @@ def find_category(request, category):
     return render(request, 'category.html', {"category": category, "games": games})
 
 
+def show_game(request, game_id):
+    game_data = db.child("games").child(game_id).get().val()
+    return render(request, 'show_game.html', {'game_data': game_data, 'game_id': game_id})
+
 def play(request, game_id):
-    title = db.child("games").child(game_id).child("title").get().val()
-    return render(request, 'play.html', {'title': title})
+    game_data = db.child("games").child(game_id).get().val()
+    storage = firebase.storage()
+    current_round = request.session.get(f'current_round_{game_id}', 0)
+
+    if current_round > (int(game_data["number_of_choices"]) - 3):
+        del request.session[f'img_list_{game_id}']
+        return redirect('show_game', game_id=game_id)
+    
+    elif current_round == 0:
+        number_list = list(range(int(game_data["number_of_choices"])))
+        request.session[f'img_list_{game_id}'] = number_list
+        
+    img_list = request.session.get(f'img_list_{game_id}')
+    print(img_list)
+    rand_img1 = random.choice(img_list)
+    print(rand_img1)
+    img_list.remove(rand_img1)
+    print(img_list)
+    rand_img2 = random.choice(img_list)
+    print(rand_img2)
+    img_list.remove(rand_img2)
+    print(img_list)
+    
+    file_path1 = 'images/' + game_id + f'/{rand_img1}.png'
+    file_path2 = 'images/' + game_id + f'/{rand_img2}.png'
+    img1 = storage.child(file_path1).get_url(None)
+    img2 = storage.child(file_path2).get_url(None)
+    title1 = db.child("games").child(game_id).child("img_titles").child(rand_img1).get().val()
+    title2 = db.child("games").child(game_id).child("img_titles").child(rand_img2).get().val()
+    current_round += 1
+    request.session[f'current_round_{game_id}'] = current_round
+    return render(request, 'play.html', {'img1': img1, 'img2': img2, 'title1': title1, 'title2': title2 })
