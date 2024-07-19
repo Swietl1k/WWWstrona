@@ -8,11 +8,15 @@
   {% endfor %}
 {% endif %}
 
-<h1> Play {{game_data.date}}</h1>
 
-<img src="{{ img1 }}" alt="Image" style="max-width: 200px; max-height: 200px;">
-{{title1}}
-<img src="{{ img2 }}" alt="Image" style="max-width: 200px; max-height: 200px;">
-{{title2}}
+{% if img1 and img2 %}
+  <img src="{{ img1 }}" alt="Image" style="max-width: 200px; max-height: 200px;">
+  <button action="button_img1" method="post">{{title1}}</button><br>
+  <img src="{{ img2 }}" alt="Image" style="max-width: 200px; max-height: 200px;">
+  <button action="button_img2" method="post">{{title2}}</button><br>
+{% else %}
+  <button action="button_play" method="post"> Play {{game_data.title}}</button><br>
+{% endif %}
+
 
 {% endblock %}

@@ -8,9 +8,13 @@
   {% endfor %}
 {% endif %}
 
-<h1> Play {{game_data.title}}</h1>
+<h1>{{ game_data.title }}</h1>
+<p>{{ game_data.description }}</p>
 
-
-<a href="/strona/play/{{ game_id }}" class="btn btn-primary">Play</a>
+<form method="post" action="{% url 'show_game' game_id %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="button_play">
+    <button type="submit">Play</button>
+</form>
 
 {% endblock %}

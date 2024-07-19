@@ -154,7 +154,7 @@ def create(request):
         if form.is_valid():
             title = form.cleaned_data['title']
             description = form.cleaned_data['description']
-            number_of_choices = form.cleaned_data['number_of_choices']
+            number_of_choices = int(form.cleaned_data['number_of_choices'])
             category = form.cleaned_data['category']
  
             game_id = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -213,7 +213,7 @@ def add_pics(request, game_id):
                 current_upload_count += 1
                 request.session[f'upload_count_{game_id}'] = current_upload_count
  
-                if current_upload_count < int(number_of_choices):
+                if current_upload_count < number_of_choices:
                     messages.success(request, f"Image {current_upload_count} uploaded successfully! Please upload the next image.")
                     return redirect('add_pics', game_id=game_id)
                 else:
@@ -246,31 +246,75 @@ def find_category(request, category):
 
 def show_game(request, game_id):
     game_data = db.child("games").child(game_id).get().val()
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'button_play':
+            request.session[f'is_game_start_{game_id}'] = True
+            return redirect('play', game_id=game_id)
+        
     return render(request, 'show_game.html', {'game_data': game_data, 'game_id': game_id})
 
 def play(request, game_id):
     game_data = db.child("games").child(game_id).get().val()
+    number_of_choices = int(game_data["number_of_choices"])
     storage = firebase.storage()
-    current_round = request.session.get(f'current_round_{game_id}', 0)
 
-    if current_round > (int(game_data["number_of_choices"]) - 3):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'button_img1':
+            winner = request.session.get(f'rand_img1_{game_id}', None)
+            current_stage = request.session.get(f'current_stage_{game_id}', None)
+            request.session[f'stage_{current_stage}_winner_{game_id}'] = winner
+            current_round += 1
+            request.session[f'current_round_{game_id}'] = current_round 
+            return redirect('mainpage', game_id=game_id)
+        
+        if action == 'button_img2':
+            winner = request.session.get(f'rand_img2_{game_id}', None)
+            current_stage = request.session.get(f'current_stage_{game_id}', None)
+            request.session[f'stage_{current_stage}_winner_{game_id}'] = winner
+            current_round += 1
+            request.session[f'current_round_{game_id}'] = current_round 
+            return redirect('play', game_id=game_id)
+    
+    if request.session.get(f'is_game_start_{game_id}'):
+        del request.session[f'current_round_{game_id}'] 
+        del request.session[f'current_stage_{game_id}'] 
+        request.session[f'is_game_start_{game_id}'] = False
+
+    current_round = request.session.get(f'current_round_{game_id}', 0)
+    current_stage = request.session.get(f'current_stage_{game_id}', 0)
+    
+    if current_round == 0:
+        number_list = list(range(number_of_choices))
+        request.session[f'img_list_{game_id}'] = number_list
+        img_list = request.session.get(f'img_list_{game_id}')
+    elif number_of_choices == 8 and  3 < current_round < 5 :
+        current_stage = 1
+        request.session[f'current_stage_{game_id}'] = current_stage
+
+        
+    elif current_round > (number_of_choices - 3):
         del request.session[f'img_list_{game_id}']
         return redirect('show_game', game_id=game_id)
     
-    elif current_round == 0:
-        number_list = list(range(int(game_data["number_of_choices"])))
-        request.session[f'img_list_{game_id}'] = number_list
+
+    rand_img1 = request.session.get(f'rand_img1_{game_id}', None)
+    rand_img2 = request.session.get(f'rand_img2_{game_id}', None)
+
+    if rand_img1 == None:
+        rand_img1 = random.choice(img_list)
+        rand_img2 = random.choice(img_list)
+
+        while rand_img2 == rand_img1:
+            rand_img2 = random.choice(img_list)
+
+        img_list.remove(rand_img1)
+        img_list.remove(rand_img2)
+        request.session[f'rand_img1_{game_id}'] = rand_img1
+        request.session[f'rand_img2_{game_id}'] = rand_img2
+        request.session[f'img_list_{game_id}'] = img_list
         
-    img_list = request.session.get(f'img_list_{game_id}')
-    print(img_list)
-    rand_img1 = random.choice(img_list)
-    print(rand_img1)
-    img_list.remove(rand_img1)
-    print(img_list)
-    rand_img2 = random.choice(img_list)
-    print(rand_img2)
-    img_list.remove(rand_img2)
-    print(img_list)
     
     file_path1 = 'images/' + game_id + f'/{rand_img1}.png'
     file_path2 = 'images/' + game_id + f'/{rand_img2}.png'
@@ -278,6 +322,5 @@ def play(request, game_id):
     img2 = storage.child(file_path2).get_url(None)
     title1 = db.child("games").child(game_id).child("img_titles").child(rand_img1).get().val()
     title2 = db.child("games").child(game_id).child("img_titles").child(rand_img2).get().val()
-    current_round += 1
-    request.session[f'current_round_{game_id}'] = current_round
-    return render(request, 'play.html', {'img1': img1, 'img2': img2, 'title1': title1, 'title2': title2 })
+    
+    return render(request, 'play.html', {'img1': img1, 'img2': img2, 'title1': title1, 'title2': title2, 'game_data': game_data })
