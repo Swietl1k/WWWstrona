@@ -10,12 +10,15 @@
 
 
 {% if img1 and img2 %}
+<form method="post" action="{% url 'play' game_id %}">
+  {% csrf_token %} 
   <img src="{{ img1 }}" alt="Image" style="max-width: 200px; max-height: 200px;">
-  <button action="button_img1" method="post">{{title1}}</button><br>
+  <button type="submit" name="action" value="button_img1">{{title1}}</button><br>
   <img src="{{ img2 }}" alt="Image" style="max-width: 200px; max-height: 200px;">
-  <button action="button_img2" method="post">{{title2}}</button><br>
+  <button type="submit" name="action" value="button_img2">{{title2}}</button><br>
+</form>
 {% else %}
-  <button action="button_play" method="post"> Play {{game_data.title}}</button><br>
+<button action="button_play" method="post"> Play {{game_data.title}}</button><br>
 {% endif %}
 
 
