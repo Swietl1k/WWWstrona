@@ -207,7 +207,9 @@ def add_pics(request, game_id):
                 file_path = f"images/{game_id}/{current_upload_count}.png"
                 storage.child(file_path).put(file)
  
-                db.child("games").child(game_id).child("img_titles").child(current_upload_count).set(title)
+                db.child("games").child(game_id).child("choice_data").child(current_upload_count).child("title").set(title)
+                db.child("games").child(game_id).child("choice_data").child(current_upload_count).child("pick_count").set(0)
+                db.child("games").child(game_id).child("choice_data").child(current_upload_count).child("win_count").set(0)
  
  
                 current_upload_count += 1
@@ -262,40 +264,55 @@ def play(request, game_id):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'button_img1':
-            winner = request.session.get(f'rand_img1_{game_id}', None)
+            winner = request.session.get(f'img1_number_{game_id}', None)
             current_round = request.session.get(f'current_round_{game_id}', 0)
             current_stage = request.session.get(f'current_stage_{game_id}', 0)
+
             winner_list = request.session.get(f'stage_{current_stage}_winner_{game_id}', [])
             winner_list.append(winner)
             request.session[f'stage_{current_stage}_winner_{game_id}'] = winner_list
-            #print(winner_list)
-            request.session.pop(f'rand_img1_{game_id}', None) 
-            request.session.pop(f'rand_img2_{game_id}', None) 
+
+            pick_count = db.child("games").child(game_id).child("choice_data").child(winner).child("pick_count").get().val()
+            pick_count += 1
+            db.child("games").child(game_id).child("choice_data").child(winner).child("pick_count").set(pick_count)
+
+            request.session.pop(f'img1_number_{game_id}', None) 
+            request.session.pop(f'img2_number_{game_id}', None) 
             current_round += 1
             request.session[f'current_round_{game_id}'] = current_round 
+
             return redirect('play', game_id=game_id)
         
         if action == 'button_img2':
-            winner = request.session.get(f'rand_img2_{game_id}', None)
+            winner = request.session.get(f'img2_number_{game_id}', None)
             current_round = request.session.get(f'current_round_{game_id}', 0)
             current_stage = request.session.get(f'current_stage_{game_id}', 0)
+
             winner_list = request.session.get(f'stage_{current_stage}_winner_{game_id}', [])
             winner_list.append(winner)
-            #print(winner_list)
             request.session[f'stage_{current_stage}_winner_{game_id}'] = winner_list
-            request.session.pop(f'rand_img1_{game_id}', None) 
-            request.session.pop(f'rand_img2_{game_id}', None) 
+
+            pick_count = db.child("games").child(game_id).child("choice_data").child(winner).child("pick_count").get().val()
+            pick_count += 1
+            db.child("games").child(game_id).child("choice_data").child(winner).child("pick_count").set(pick_count)
+
+            request.session.pop(f'img1_number_{game_id}', None) 
+            request.session.pop(f'img2_number_{game_id}', None) 
             current_round += 1
             request.session[f'current_round_{game_id}'] = current_round 
+
             return redirect('play', game_id=game_id)
     
-    if request.session.get(f'is_game_start_{game_id}'):
+    if request.session.get(f'is_game_start_{game_id}', False):
         request.session.pop(f'current_round_{game_id}', None) 
         request.session.pop(f'current_stage_{game_id}', None) 
-        for i in range(4):
+        request.session.pop(f'img1_number_{game_id}', None) 
+        request.session.pop(f'img2_number_{game_id}', None) 
+        request.session.pop(f'img_list_{game_id}', None) 
+        for i in range(5):
             request.session.pop(f'stage_{i}_winner_{game_id}', None)
 
-        request.session[f'is_game_start_{game_id}'] = False
+        del request.session[f'is_game_start_{game_id}']
 
     current_round = request.session.get(f'current_round_{game_id}', 0)
     current_stage = request.session.get(f'current_stage_{game_id}', 0)
@@ -308,48 +325,75 @@ def play(request, game_id):
         img_list = request.session.get(f'img_list_{game_id}')
         request.session[f'stage_0_winner_{game_id}'] = []
 
-    elif number_of_choices == 8 and  3 < current_round < 6 :
-        current_stage = 1
-        request.session[f'stage_{current_stage}_winner_{game_id}'] = []
-        request.session[f'current_stage_{game_id}'] = current_stage
-
-    elif number_of_choices == 8 and  5 < current_round < 7 :
-        current_stage = 2
-        request.session[f'stage_{current_stage}_winner_{game_id}'] = []
-        request.session[f'current_stage_{game_id}'] = current_stage
-
     elif current_round > (number_of_choices - 2):
-        del request.session[f'img_list_{game_id}']
+        winner_list = request.session.get(f'stage_{current_stage}_winner_{game_id}', [])
+        winning_number = winner_list[0]
+        win_count = db.child("games").child(game_id).child("choice_data").child(winning_number).child("win_count").get().val()
+        win_count += 1
+        db.child("games").child(game_id).child("choice_data").child(winning_number).child("win_count").set(win_count) 
+
+        play_count = db.child("games").child(game_id).child("play_count").get().val()
+        play_count += 1
+        db.child("games").child(game_id).child("play_count").set(play_count) 
+
+
+        request.session.pop(f'current_round_{game_id}', None) 
+        request.session.pop(f'current_stage_{game_id}', None)
+        request.session.pop(f'img1_number_{game_id}', None) 
+        request.session.pop(f'img2_number_{game_id}', None) 
+        request.session.pop(f'img_list_{game_id}', None) 
+        for i in range(5):
+            request.session.pop(f'stage_{i}_winner_{game_id}', None)
+
         return redirect('show_game', game_id=game_id)
     
+    stage_mapping = {
+        (8, 4): 1,
+        (8, 6): 2,
+        (16, 8): 1,
+        (16, 12): 2,
+        (16, 14): 3,
+        (32, 16): 1,
+        (32, 24): 2,
+        (32, 28): 3,
+        (32, 30): 4,
+    }
+    current_stage = stage_mapping.get((number_of_choices, current_round))
+
+    if current_stage is not None:
+        request.session[f'stage_{current_stage}_winner_{game_id}'] = []
+        request.session[f'current_stage_{game_id}'] = current_stage
+
     
+    current_stage = request.session.get(f'current_stage_{game_id}')
     print(f'round: {current_round}, stage: {current_stage}')
 
     img_list = request.session.get(f'img_list_{game_id}', None)
-    rand_img1 = request.session.get(f'rand_img1_{game_id}', None)
-    rand_img2 = request.session.get(f'rand_img2_{game_id}', None)
+    img1_number = request.session.get(f'img1_number_{game_id}', None)
+    img2_number = request.session.get(f'img2_number_{game_id}', None)
 
-    if rand_img1 == None:
+    if img1_number == None:
         if not img_list:
             img_list = request.session.get(f'stage_{current_stage - 1}_winner_{game_id}', [])
 
-        rand_img1 = random.choice(img_list)
-        rand_img2 = random.choice(img_list)
+        img1_number = random.choice(img_list)
+        img2_number = random.choice(img_list)
+        print(f'img list: {img_list}')
 
-        while rand_img2 == rand_img1:
-            rand_img2 = random.choice(img_list)
+        while img2_number == img1_number:
+            img2_number = random.choice(img_list)
 
-        img_list.remove(rand_img1)
-        img_list.remove(rand_img2)
-        request.session[f'rand_img1_{game_id}'] = rand_img1
-        request.session[f'rand_img2_{game_id}'] = rand_img2
+        img_list.remove(img1_number)
+        img_list.remove(img2_number)
+        request.session[f'img1_number_{game_id}'] = img1_number
+        request.session[f'img2_number_{game_id}'] = img2_number
         request.session[f'img_list_{game_id}'] = img_list
         
-    file_path1 = 'images/' + game_id + f'/{rand_img1}.png'
-    file_path2 = 'images/' + game_id + f'/{rand_img2}.png'
+    file_path1 = 'images/' + game_id + f'/{img1_number}.png'
+    file_path2 = 'images/' + game_id + f'/{img2_number}.png'
     img1 = storage.child(file_path1).get_url(None)
     img2 = storage.child(file_path2).get_url(None)
-    title1 = db.child("games").child(game_id).child("img_titles").child(rand_img1).get().val()
-    title2 = db.child("games").child(game_id).child("img_titles").child(rand_img2).get().val()
+    title1 = db.child("games").child(game_id).child("choice_data").child(img1_number).child("title").get().val()
+    title2 = db.child("games").child(game_id).child("choice_data").child(img2_number).child("title").get().val()
     
     return render(request, 'play.html', {'img1': img1, 'img2': img2, 'title1': title1, 'title2': title2, 'game_data': game_data, 'game_id': game_id })
