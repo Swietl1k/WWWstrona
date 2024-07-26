@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-info">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<h1>{{ game_data.title }}</h1>
+<p>{{ game_data.description }}</p>
+{% if user_name %}
+  <form method="post" action="{% url 'show_game' game_id %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="button_play">
+      <button type="submit">Play</button>
+  </form>
+{% else %}
+  <p> Log in to play this game </p>
+{% endif %}
+{% endblock %}
